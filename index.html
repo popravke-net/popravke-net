@@ -6,11 +6,99 @@
   <title>Поправкам в Конституции РФ — НЕТ</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;700&display=swap" rel="stylesheet">
 <style>
+  * {
+    box-sizing: border-box;
+  }
 
-  
+  body {
+    font-family: 'Roboto Condensed', Arial, Helvetica, sans-serif;
+    font-size: calc(min(6vw, 32px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  #content {
+    width: 85%;
+    max-width: 1130px;
+  }
+
+  .questions {
+
+  }
+  input {
+    display: none;
+  }
+  .question {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    color: #136cb3;
+    border-bottom: 1.3px dashed #136cb3;
+  }
+  .question span {
+    position: absolute;
+    right: 100%;
+    margin-right: 12px;
+  }
+  .collapsible {
+    display: flex;
+    overflow: hidden;
+  }
+  .collapsible:after {
+    content: '';
+    height: 50px;
+    transition: height 0.3s linear, max-height 0s 0.3s linear;
+    max-height: 0px;
+  }
+  .answer {
+    transition: margin-bottom 0.3s cubic-bezier(0, 0, 0, 1);
+    margin-bottom: 0;
+    max-height: 1000000px;
+  }
+  input:not(:checked) + .collapsible > .answer {
+    margin-bottom: -2000px;
+    transition: margin-bottom 0.3s cubic-bezier(1, 0, 1, 1),
+                visibility 0s 0.3s, max-height 0s 0.3s;
+    visibility: hidden;
+    max-height: 0;
+  }
+  input:not(:checked) + .collapsible:after
+  {
+    height: 0;
+    transition: height 0.3s linear;
+    max-height: 50px;
+  }
 </style>
 </head>
 <body>
-  
+  <div id="content">
+    <p>C 25 июня по 1 июля 2020 года пройдёт голосование о поправках в Конституцию РФ.</p>
+    <p>Если вы живёте в России и вам небезразлично будущее страны, стоит проголосовать <strong>против этих поправок и этим выразить своё неодобрение изменению Конституции</strong>.</p>
+
+    <div class="questions">
+      
+      <label class="question" for="q1"><span>— </span>Почему?</label><input type="checkbox" id="q1">
+      <div class="collapsible"><div class="answer">
+        <p>Среди вносимых изменений — поправка, позволяющая Владимиру Путину оставаться президентом России как минимум до <strong>2036 года</strong>.</p>
+        <p>На данный момент он был на этом посту уже дольше 12 лет, несмотря на его собственные заявления о необходимости сменяемости власти.</p>
+      </div></div>
+
+      <label class="question" for="q2"><span>— </span>Что за поправки?</label><input type="checkbox" id="q2">
+      <div class="collapsible"><div class="answer">
+        <p>Конституция — высший правовой акт Российской Федерации. 15 января 2020 года президент России В. В. Путин предложил внести в неё ряд изменений.</p>
+        <p>В окончательном виде эти поправки затрагивают <strong>46 статей</strong> Конституции. Возможности проголосовать только за часть из них вам не дадут.</p>
+      </div></div>
+      
+      <label class="question" for="q3"><span>— </span>Разве это важно?</label><input type="checkbox" id="q3">
+      <div class="collapsible"><div class="answer">
+        <p>Несмотря на то, что обсуждаемые поправки уже вступили в юридическую силу, проводимое голосование позволит выразить отношение народа к ним.</p>
+        <p>Этому могут помешать попытки фальсифицировать результаты, но чем больше граждан выступят против — тем <strong>сложнее будет не услышать их голос</strong>.</p>
+      </div></div>
+    </div>
+  </div>
 </body>
 </html>
