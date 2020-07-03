@@ -241,19 +241,16 @@
         if (voted < 100) { // Neutral
           return 'undef'; 
         } else
-        if (regionId === '100100164050020') {
-          return 'ok';
-        } else
         if ((result < 5) || (result > 95)) {
           return 'danger';
         } else
-        if (result > Math.max(minResult, 50) + 25) {
+        if (regionId !== '100100164050020' && result > Math.max(minResult, 50) + 25) {
           return 'danger-diff';
         } else
         if ((result < 10) || (result > 90)) {
           return 'warn';
         } else
-        if (result > Math.max(minResult, 50) + 20) {
+        if (regionId !== '100100164050020' && result > Math.max(minResult, 50) + 20) {
           return 'warn-diff';
         } else {
           return 'ok';
@@ -269,13 +266,13 @@
         if (turnout > 95) {
           return 'danger';
         } else
-        if (turnout > Math.max(minTurnout, 30) + 50) {
+        if (regionId !== '100100164050020' && turnout > Math.max(minTurnout, 30) + 50) {
           return 'danger-diff';
         } else
         if (turnout > 90) {
           return 'warn';
         } else
-        if (turnout > Math.max(minTurnout, 30) + 40) {
+        if (regionId !== '100100164050020' && turnout > Math.max(minTurnout, 30) + 40) {
           return 'warn-diff';
         } else {
           return 'ok';
@@ -366,9 +363,9 @@
     }
 
 
-    titleEl.innerHTML = '<b>' + regionName + '</b>' + (regionId === '100100164050020' ? '' : (': ' +
+    titleEl.innerHTML = '<b>' + regionName + '</b>: ' +
       '<b class="danger">' + regionAnomalies + '</b> аномальных УИКов (<b>' + (100 * regionAnomalies / regionUiks).toFixed(1) + '%</b>), ' +
-      '<b class="warn">' + regionWarns + '</b> сомнительных (<b>' + (100 * regionWarns / regionUiks).toFixed(1) + '%</b>)'));
+      '<b class="warn">' + regionWarns + '</b> сомнительных (<b>' + (100 * regionWarns / regionUiks).toFixed(1) + '%</b>)';
   }
   tooltipEl = document.createElement('div');
   tooltipEl.className = 'tooltip';
