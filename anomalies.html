@@ -16,7 +16,6 @@
 <style>
   body {
     font-family: 'Roboto Condensed', Arial, Helvetica, sans-serif;
-    font-size: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -24,11 +23,9 @@
     margin: 0;
     padding: 20px 20px 40px 20px;
   }
-  #content {
+  header {
     font-size: 30px;
     font-size: calc(min(5vw, 30px));
-    width: 90%;
-    max-width: 1080px;
   }
 
   h1 {
@@ -64,11 +61,13 @@
     page-break-inside: avoid;
     break-inside: avoid;
     margin-bottom: 8px;
+    cursor: default;
   }
   .title {
     position: absolute;
     top: 2px;
     left: 0px;
+    font-size: 10px;
   }
   a {
     text-decoration: none;
@@ -108,6 +107,7 @@
   }
   .tooltip {
     display: none;
+    font-size: 14px;
     position: absolute;
     z-index: 1000;
     background: #fff;
@@ -137,6 +137,33 @@
     content: '';
     transform: translate(-1px, 1px) rotate(90deg);
   }
+  .plot {
+    display: none;
+    pointer-events: none;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.55);
+    border-radius: 3px;
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+  }
+  .tab {
+    color: #136cb3;
+    border-bottom: 1.3px dashed #136cb3;
+    cursor: pointer;
+  }
+  .tab.active {
+    font-weight: bold;
+    border-bottom: none;
+    cursor: default;
+  }
+  #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    cursor: crosshair;
+  }
 </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171297809-1"></script>
 <script>
@@ -147,42 +174,257 @@
 </script>
 </head>
 <body>
-  <div id="content">
-    <a href="https://popravke.net/"><h1>Поправке&nbsp;— <span>НЕТ</span></h1></a>
-  </div>
   <div class="legend">
-    <p>Ниже визуализированы результаты голосования по поправкам к Конституции РФ, доступные на сайте Центризбиркома.</p>
-    <p>Каждый отдельный столбик соответствует одному УИКу. Его высота пропорциональна доле голосов «за» поправки на конкретном участке. Цветами окрашены «аномальные» участки.</p>
-    <p><b class="danger">Красным</b> окрашены участки с откровенными аномалиями, а именно:
-      <ul>
-        <li>с результатом ниже 5% или выше 95%,</li>
-        <li>либо с результатом, на 25% превышающим минимальный среди УИКов этого же ТИКа,</li>
-        <li>либо с явкой выше 95%,</li>
-        <li>либо с явкой, на 50% превышающей минимальную среди УИКов этого же ТИКа.</li>
-      </ul></p>
-    <p><b class="warn">Оранжевым</b> окрашены участки, вызывающие серьёзные сомнения, а именно:
-      <ul>
-        <li>с результатом ниже 10% или выше 90%,</li>
-        <li>либо с результатом, на 20% превышающим минимальный среди УИКов этого же ТИКа,</li>
-        <li>либо с явкой выше 90%,</li>
-        <li>либо с явкой, на 40% превышающей минимальную среди УИКов этого же ТИКа.</li>
-      </ul></p>
-    <p><b class="normal">Синим</b> окрашены столбцы, соответствующие участкам без явных аномалий (это, разумеется, не означает отсутствие фальсификаций — например, если на <i>каждом</i> УИКе в пределах одного ТИКа были вбросы, то сравнения с минимумом бесполезны). <b>Серые</b> столбцы соответствуют участкам с менее чем 100 голосами, так как в этом случае данных мало для уверенной оценки.</p>
-    <p><b>Примечание</b>. При оценке минимального результата в пределах каждого ТИКа игнорируются участки с менее чем 100 голосами, а также результаты ниже 50%. При оценке минимальной явки игнорируются участки с менее чем 100 избирателями, либо с явкой ниже 30%.</p>
-    <p>При наведении курсора на конкретный столбик можно увидеть подробную информацию о соответствующем УИКе и ТИКе. По клику можно перейти на страницу результатов на сайте ЦИКа, чтобы убедиться в корректности данных.</p>
-    <p>Также для каждого ТИКа сделана оценка аномальности по числу «аномальных» участков. Если в пределах ТИКа более двух третей аномальных участков, его блок имеет красную рамку. Если аномальных участков от одной до двух третей, рамка оранжевая. Если проблемных УИКов менее трети, рамка серая. Каждый «сомнительный» УИК (оранжевые столбики) учитывается как половина аномального.</p>
+    <header><a href="https://popravke.net/"><h1>Поправке&nbsp;— <span>НЕТ</span></h1></a></header>
+    <p style="text-align: center;">Ниже визуализированы результаты голосования по поправкам к Конституции РФ, доступные на сайте Центризбиркома.</p>
+    <div style="text-align: center;"><span class="tab active" id="tab0" onclick="selectTab(0)">Список всех участков</span> | <span class="tab" id="tab1" onclick="selectTab(1)">Диаграмма распределения</span></div>
+    <div id="tab1content" style="display: none">
+      <p>Каждая точка на диаграмме соответствует одному УИКу. Её положение по горизонтали соответствует явке на этом участке, а по вертикали — проценту голосов «за».</p>
+      
+      <p>Обратите внимание на три кластера — в районе 65% результата и 41.5% явки (участки без явных нарушений), около 77% результата и 64% явки (множество УИКов Татарстана, давших почти идентичные показатели) и большую область в верхнем правом углу — 90% результат, 90% явка (массовые фальсификации).</p>
+
+      <p>Вдоль верхней и правой осей также построены гистограммы — число УИКов с конкретной явкой или результатом. Явные «зубцы» на значениях, кратных 5% (а также некоторых целочисленных процентах), показывают, что многие участки стремились подогнать явку/результат к заранее известному «круглому» числу.</p>
+      <div style="display: flex; flex-direction: column; align-items: center; margin-top: 24px; position: relative;">
+        <canvas id="plot"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+    </div>
+    <div id="tab0content">
+      <p>Каждый отдельный столбик соответствует одному УИКу. Его высота пропорциональна доле голосов «за» поправки на конкретном участке. Цветами окрашены «аномальные» участки.</p>
+      <p><b class="danger">Красным</b> окрашены участки с откровенными аномалиями, а именно:
+        <ul>
+          <li>с результатом ниже 5% или выше 95%,</li>
+          <li>либо с результатом, на 25% превышающим минимальный среди УИКов этого же ТИКа,</li>
+          <li>либо с явкой выше 95%,</li>
+          <li>либо с явкой, на 50% превышающей минимальную среди УИКов этого же ТИКа.</li>
+        </ul></p>
+      <p><b class="warn">Оранжевым</b> окрашены участки, вызывающие серьёзные сомнения, а именно:
+        <ul>
+          <li>с результатом ниже 10% или выше 90%,</li>
+          <li>либо с результатом, на 20% превышающим минимальный среди УИКов этого же ТИКа,</li>
+          <li>либо с явкой выше 90%,</li>
+          <li>либо с явкой, на 40% превышающей минимальную среди УИКов этого же ТИКа.</li>
+        </ul></p>
+      <p><b class="normal">Синим</b> окрашены столбцы, соответствующие участкам без явных аномалий (это, разумеется, не означает отсутствие фальсификаций — например, если на <i>каждом</i> УИКе в пределах одного ТИКа были вбросы, то сравнения с минимумом бесполезны). <b>Серые</b> столбцы соответствуют участкам с менее чем 100 голосами, так как в этом случае данных мало для уверенной оценки.</p>
+      <p><b>Примечание</b>. При оценке минимального результата в пределах каждого ТИКа игнорируются участки с менее чем 100 голосами, а также результаты ниже 50%. При оценке минимальной явки игнорируются участки с менее чем 100 избирателями, либо с явкой ниже 30%.</p>
+      <p>При наведении курсора на конкретный столбик можно увидеть подробную информацию о соответствующем УИКе и ТИКе. По клику можно перейти на страницу результатов на сайте ЦИКа, чтобы убедиться в корректности данных.</p>
+      <p>Также для каждого ТИКа сделана оценка аномальности по числу «аномальных» участков. Если в пределах ТИКа более двух третей аномальных участков, его блок имеет красную рамку. Если аномальных участков от одной до двух третей, рамка оранжевая. Если проблемных УИКов менее трети, рамка серая. Каждый «сомнительный» УИК (оранжевые столбики) учитывается как половина аномального.</p>
+      <div id="chart"></div>
+    </div>
   </div>
-  <div id="chart"></div>
 <script src="tree.js"></script>
 <script>
+CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  this.beginPath();
+  this.moveTo(x+r, y);
+  this.arcTo(x+w, y,   x+w, y+h, r);
+  this.arcTo(x+w, y+h, x,   y+h, r);
+  this.arcTo(x,   y+h, x,   y,   r);
+  this.arcTo(x,   y,   x+w, y,   r);
+  this.closePath();
+  return this;
+}
+let plot;
+const dp = window.devicePixelRatio;
+
+function selectTab(index) {
+  for (let i = 0; i < 2; i++) {
+    document.getElementById('tab' + i + 'content').style.display = i == index ? 'block' : 'none';
+    document.getElementById('tab' + i).classList.toggle('active', i == index);
+  }
+  if (index == 1) {
+    plot.finish();
+    plot.attachOverlay(document.getElementById('overlay'));
+  }
+}
+
+function ResultTurnoutPlot(el, { sz, sp, histSz, histRes, bigFontSz, smallFontSz }) {
+  this.ctx = el.getContext('2d');
+  this.sz = sz * dp;
+  this.sp = sp * dp;
+  this.histSz = histSz * dp;
+  this.fullSz = this.sp * 3 + this.sz + this.histSz;
+  this.histRes = histRes;
+  this.barSz = (this.sz / (histRes + 1)) * 0.8;
+  this.bigFontSz = bigFontSz * dp;
+  this.smallFontSz = smallFontSz * dp;
+  el.width = this.fullSz;
+  el.height = this.fullSz;
+  el.style.width = (this.fullSz / dp) + 'px';
+  el.style.height = (this.fullSz / dp) + 'px';
+  this.ctx.clearRect(0, 0, this.fullSz, this.fullSz);
+
+  this.histTurnout = new Array(histRes + 1);
+  this.histResult = new Array(histRes + 1);
+  for (let i = 0; i <= histRes; i++) {
+    this.histTurnout[i] = this.histResult[i] = 0;
+  }
+}
+ResultTurnoutPlot.prototype.clearPoints = function() {
+  this.ctx.clearRect(this.sp, this.sp * 2 + this.histSz, this.sz, this.sz);
+}
+ResultTurnoutPlot.prototype.addPoint = function(result, turnout, color, alpha, r) {
+  this.histResult[Math.round(result * this.histRes / 100)]++;
+  this.histTurnout[Math.round(turnout * this.histRes / 100)]++;
+  this.ctx.globalAlpha = alpha;
+  this.ctx.fillStyle = color;
+  this.ctx.beginPath();
+  this.ctx.arc(this.sp + turnout * this.sz / 100, this.fullSz - this.sp - result * this.sz / 100, r, 0, 2 * Math.PI);
+  this.ctx.fill();
+}
+ResultTurnoutPlot.prototype.finish = function() {
+  if (this.finished) {
+    return;
+  }
+  this.finished = true;
+  let maxTurnoutCnt = 0;
+  let maxResultCnt = 0;
+  for (let i = 0; i < this.histRes; i++) {
+    maxTurnoutCnt = Math.max(maxTurnoutCnt, this.histTurnout[i]);
+    maxResultCnt = Math.max(maxResultCnt, this.histResult[i]);
+  }
+  this.ctx.globalAlpha = 1;
+  this.ctx.font = `bold ${this.smallFontSz}px "Roboto Condensed"`;
+  this.ctx.textAlign = 'center';
+  for (let i = 0; i <= this.histRes; i++) {
+    this.ctx.fillStyle = (i % (5 * this.histRes / 100) == 0) ? '#0097a7' : '#00bcd4';
+    let sz = this.histSz * this.histTurnout[i] / maxTurnoutCnt;
+    let offs = this.sp + this.sz * i / this.histRes;
+    this.ctx.roundRect(offs - this.barSz * 0.5, this.sp + this.histSz - sz, this.barSz, sz, 2);
+    this.ctx.fill();
+    sz = this.histSz * this.histResult[i] / maxResultCnt;
+    this.ctx.roundRect(this.sp * 2 + this.sz, this.fullSz - offs - this.barSz * 0.5, sz, this.barSz, 2);
+    this.ctx.fill();
+    if (i % (10 * this.histRes / 100) == 0) {
+      const val = i * 100 / this.histRes;
+      this.ctx.fillStyle = '#555';
+      this.ctx.fillText(val + '%', offs - this.barSz * 0.5 + (i == this.histRes ? -4 : 3), this.sp + this.histSz + 12);
+      this.ctx.save();
+      this.ctx.translate(this.sp * 2 + this.sz, this.fullSz - offs - this.barSz * 0.5);
+      this.ctx.rotate(Math.PI / 2);
+      this.ctx.fillText(val + '%', i == this.histRes ? 12 : 3, 12);
+      this.ctx.restore();
+    }
+  }
+  
+  this.ctx.font = `bold ${this.bigFontSz}px "Roboto Condensed"`;
+  this.ctx.fillStyle = '#555';
+  this.ctx.textAlign = 'left';
+  this.ctx.fillText('Явка  →', this.sp + this.histSz / 2, this.sp + this.histSz / 2 + this.bigFontSz / 2);
+  this.ctx.textAlign = 'right';
+  this.ctx.save();
+  this.ctx.translate(this.fullSz - this.sp - this.histSz / 2 - this.bigFontSz / 2, this.fullSz - this.sp - this.histSz / 2);
+  this.ctx.rotate(Math.PI / 2);
+  this.ctx.fillText('←  Результат', 0, 0);
+  this.ctx.restore();
+}
+ResultTurnoutPlot.prototype.attachOverlay = function(overlay) {
+  if (this.attached) {
+    return;
+  }
+  this.attached = true;
+  overlay.width = this.fullSz;
+  overlay.height = this.fullSz;
+  overlay.style.width = (this.fullSz / dp) + 'px';
+  overlay.style.height = (this.fullSz / dp) + 'px';
+  const overlayCtx = overlay.getContext('2d');
+  overlayCtx.fillStyle = '#0097a7';
+  overlayCtx.setLineDash([3, 1]);
+  overlayCtx.font = `bold ${8 * dp}px "Roboto Condensed"`;
+  
+  function drawCrossHair(result, turnout, label) {
+    const x = this.sp + turnout * this.sz / 100;
+    const y = this.fullSz - this.sp - result * this.sz / 100;
+    
+    overlayCtx.strokeStyle = '#0097a7';
+    overlayCtx.lineWidth = 1; 
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(x, label ? y - 50 : (this.sp * 2 + this.histSz));
+    overlayCtx.lineTo(x, label ? y + 50 : (this.fullSz - this.sp));
+    overlayCtx.stroke();
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(label ? x - 50 : this.sp, y);
+    overlayCtx.lineTo(label ? x + 50 : (this.sp + this.sz), y);
+    overlayCtx.stroke();
+
+    overlayCtx.strokeStyle = '#fff';
+    overlayCtx.lineWidth = 3; 
+    if (turnout > 30) {
+      overlayCtx.textAlign = 'right';
+      overlayCtx.strokeText('Результат: ' + result.toFixed(2) + '%', x - 70, y + 15);
+      overlayCtx.fillText('Результат: ' + result.toFixed(2) + '%', x - 70, y + 15);
+    } else {
+      overlayCtx.textAlign = 'left';
+      overlayCtx.strokeText('Результат: ' + result.toFixed(2) + '%', x + 70, y + 15);
+      overlayCtx.fillText('Результат: ' + result.toFixed(2) + '%', x + 70, y + 15);
+    }
+    overlayCtx.save();
+    if (result < 30) {
+      overlayCtx.textAlign = 'right';
+      overlayCtx.translate(x - 15, y - 70);
+    } else {
+      overlayCtx.textAlign = 'left';
+      overlayCtx.translate(x - 15, y + 70);
+    }
+    overlayCtx.rotate(Math.PI / 2);
+    overlayCtx.strokeText('Явка: ' + turnout.toFixed(2) + '%', 0, 0);
+    overlayCtx.fillText('Явка: ' + turnout.toFixed(2) + '%', 0, 0);
+    overlayCtx.restore();
+
+    if (label) {
+      overlayCtx.textAlign = 'right';
+      overlayCtx.strokeText(label, x - 70, y - 70);
+      overlayCtx.fillText(label, x - 70, y - 70);
+    }
+  }
+  function drawDefaults() {
+    drawCrossHair.call(this, 65, 41.5, 'Участки без фальсификаций');
+    //drawCrossHair.call(this, 77.5, 64, 'Фальсификации в Татарстане');
+    drawCrossHair.call(this, 77.92, 64.99, 'Официальные итоги');
+  }
+  function hoverFn(ev) {
+    overlayCtx.clearRect(0, 0, this.fullSz, this.fullSz);
+    const x = ev.offsetX * dp;
+    const y = ev.offsetY * dp;
+    const turnout = 100 * (x - this.sp) / this.sz;
+    const result = 100 - 100 * (y - (this.sp * 2 + this.histSz)) / this.sz;
+    if (turnout >= 0 && turnout <= 100 && result >= 0 && result <= 100) {
+      drawCrossHair.call(this, result, turnout);
+    } else {
+      drawDefaults.call(this);
+    }
+  }
+
+  function hoverOutFn() {
+    overlayCtx.clearRect(0, 0, this.fullSz, this.fullSz);
+    drawDefaults.call(this);
+  }
+
+  overlay.addEventListener('mousemove', hoverFn.bind(this));
+  overlay.addEventListener('mouseout', hoverOutFn.bind(this));
+  drawDefaults.call(this);
+}
+function render() {
   const chart = document.getElementById('chart');
 
-  const dp = window.devicePixelRatio;
   const barW = 2 * dp;
   const barH = 10 * dp;
   const barSp = 0.5 * dp;
+  
+  plot = new ResultTurnoutPlot(document.getElementById('plot'), {
+    sz: 800, sp: 9, histSz: 100, histRes: 400,
+    bigFontSz: 24, smallFontSz: 6.5,
+  });
+
   let tooltipEl;
   let pointerEl;
+  let plotEl;
+  let lastRegionId = null;
+  let lastTikId = null;
+  let lastUikId = null;
+  let regionPlot;
   for (let [regionName, regionId, tiks] of root) {
     const regionEl = document.createElement('div');
     regionEl.className = 'region';
@@ -309,6 +551,7 @@
           ctx.fillStyle = '#ff9800';
         }
         ctx.fillRect(i * (barW + barSp), barH * (1 - result / 100), barW, barH);
+        plot.addPoint(result, turnout, '#f44336', 0.27, 1.2);
         i++;
       }
       if (anomalyCnt > 0.66 * uiks.length) {
@@ -321,6 +564,7 @@
 
       const hoverFn = (ev) => {
         tikEl.classList.add('active');
+        plotEl.style.display = 'block';
         tooltipEl.style.display = 'block';
         pointerEl.style.display = 'block';
         const rect = tikEl.getBoundingClientRect();
@@ -346,30 +590,125 @@
           `Результат по ТИКу: <b>${tikResult.toFixed(1)}%</b>, разброс <b class="${resultClass(minResult, 100)}">${minResult.toFixed(1)}%</b>—<b class="${resultClass(maxResult, 100)}">${maxResult.toFixed(1)}%</b>`,
           '',
           `<b>${uikName}</b>`,
-          `Явка по УИКу: <b class="${turnoutClass(turnout, total)}">${turnout.toFixed(1)}%</b> (<b class="diff ${turnoutClass(turnout, total)}">${diffTurnout > 0 ? '+' + diffTurnout + '%</b> к' : (diffTurnout ? '-' + -diffTurnout + '%</b> к' : '=</b>') } мин.), ${voted} чел.`,
-          `Результат по УИКу: <b class="${resultClass(result, voted)}">${result.toFixed(1)}%</b> (<b class="diff ${resultClass(result, voted)}">${diffResult > 0 ? '+' + diffResult + '%</b> к' : (diffResult ? '-' + -diffResult + '%</b> к' : '=</b>') } мин.), ${yays} «за»`,
+          `Явка по УИКу: <b class="${turnoutClass(turnout, total)}">${turnout.toFixed(1)}%</b>, ${voted} чел.`,
+          `Результат по УИКу: <b class="${resultClass(result, voted)}">${result.toFixed(1)}%</b>, ${yays} «за»`,
         ].join('<br/>');
+        const curUikId = uikId;
+        if (lastRegionId !== regionId || lastTikId !== tikId) {
+          lastRegionId = regionId;
+          lastTikId = tikId;
+          regionPlot = new ResultTurnoutPlot(plotEl, {
+            sz: 300, sp: 6, histSz: 36, histRes: 400,
+            bigFontSz: 12, smallFontSz: 5,
+          });
+        }
+        if (lastUikId !== uikId) {
+          lastUikId = uikId;
+          regionPlot.clearPoints();
+          const curTikId = tikId;
+          for (let [tikName, tikId, uiks] of tiks) {
+            for (let [uikName, uikId, total, voted, yays] of uiks) {
+              const turnout = 100 * voted / total;
+              const result = 100 * yays / voted;
+              if (curTikId != tikId) {
+                const color = '#f44336';
+                regionPlot.addPoint(result, turnout, color, 0.5, 1.5);
+              }
+            }
+          }
+          for (let [tikName, tikId, uiks] of tiks) {
+            for (let [uikName, uikId, total, voted, yays] of uiks) {
+              const turnout = 100 * voted / total;
+              const result = 100 * yays / voted;
+              if (curTikId == tikId) {
+                //const color = (curUikId === uikId) ? '#0097a7' : '#00bcd4';
+                const color = '#00bcd4';
+                //regionPlot.addPoint(result, turnout, '#fff', 0.75, 4);
+                regionPlot.addPoint(result, turnout, color, 0.75, 3.5);
+                
+              }
+            }
+            for (let [uikName, uikId, total, voted, yays] of uiks) {
+              const turnout = 100 * voted / total;
+              const result = 100 * yays / voted;
+              if (curUikId == uikId) {
+                regionPlot.addPoint(result, turnout, '#fff', 0.75, 2);
+              }
+            }
+          }
+          regionPlot.finish();
+        }
+        ev.stopPropagation();
       }
       const hoverOutFn = (ev) => {
         tikEl.classList.remove('active');
         tooltipEl.style.display = 'none';
         pointerEl.style.display = 'none';
+        plotEl.style.display = 'none';
       } 
       canvasEl.addEventListener('mousemove', hoverFn);
       canvasEl.addEventListener('mouseout', hoverOutFn);
     }
 
 
-    titleEl.innerHTML = '<b>' + regionName + '</b>: ' +
+    titleEl.innerHTML = `<b><a href="http://www.vybory.izbirkom.ru/region/region/izbirkom?action=show&vrn=100100163596966&vibid=${regionId}&type=465" target="_blank">${regionName}</a></b>: ` +
       '<b class="danger">' + regionAnomalies + '</b> аномальных УИКов (<b>' + (100 * regionAnomalies / regionUiks).toFixed(1) + '%</b>), ' +
       '<b class="warn">' + regionWarns + '</b> сомнительных (<b>' + (100 * regionWarns / regionUiks).toFixed(1) + '%</b>)';
+      
+    const hoverFn = (ev) => {
+      plotEl.style.display = 'block';
+      const regionRect = regionEl.getBoundingClientRect();
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      /*if (regionRect.left + scrollLeft > document.body.clientWidth / 2) {
+        plotEl.style.right = document.body.clientWidth - (regionRect.left + scrollLeft) + 'px';
+        plotEl.style.left = 'auto';
+      } else {
+        plotEl.style.right = 'auto';
+        plotEl.style.left = regionRect.left + regionRect.width + scrollLeft + 'px';
+      }*/
+      plotEl.style.top = regionRect.top + scrollTop - 360 + 'px';
+      plotEl.style.left = regionRect.left + scrollLeft + 'px';
+
+      
+      if (lastRegionId !== regionId || lastTikId !== null) {
+        lastRegionId = regionId;
+        lastTikId = null;
+        regionPlot = new ResultTurnoutPlot(plotEl, {
+          sz: 300, sp: 6, histSz: 36, histRes: 400,
+          bigFontSz: 12, smallFontSz: 5,
+        });
+        for (let [tikName, tikId, uiks] of tiks) {
+          for (let [uikName, uikId, total, voted, yays] of uiks) {
+            const turnout = 100 * voted / total;
+            const result = 100 * yays / voted;
+            const color = '#f44336';
+            regionPlot.addPoint(result, turnout, color, 0.5, 1.5);
+          }
+        }
+        regionPlot.finish();
+      }
+    }
+    const hoverOutFn = (ev) => {
+      plotEl.style.display = 'none';
+    } 
+    regionEl.addEventListener('mousemove', hoverFn);
+    regionEl.addEventListener('mouseleave', hoverOutFn);
   }
+
+  //plot.finish();
+  
   tooltipEl = document.createElement('div');
   tooltipEl.className = 'tooltip';
   pointerEl = document.createElement('div');
   pointerEl.className = 'pointer';
+  plotEl = document.createElement('canvas');
+  plotEl.className = 'plot';
   document.body.appendChild(tooltipEl);
   document.body.appendChild(pointerEl);
+  document.body.appendChild(plotEl);
+}
+render();
 </script>
 </body>
 </html>
