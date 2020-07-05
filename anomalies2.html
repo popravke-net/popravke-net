@@ -205,7 +205,7 @@
           <li>либо с явкой выше 90%,</li>
           <li>либо с явкой, на 40% превышающей минимальную среди УИКов этого же ТИКа.</li>
         </ul></p>
-      <p><b class="normal">Синим</b> окрашены столбцы, соответствующие участкам без явных аномалий (это, разумеется, <b>не означает отсутствие фальсификаций</b> — например, если на <i>каждом</i> УИКе в пределах одного ТИКа были вбросы, то сравнения с минимумом бесполезны). <b>Серые</b> столбцы соответствуют участкам с менее чем 100 голосами, так как в этом случае данных мало для уверенной оценки.</p>
+      <p><b class="normal">Синим</b> окрашены столбцы, соответствующие участкам без явных аномалий (это, разумеется, не означает отсутствие фальсификаций — например, если на <i>каждом</i> УИКе в пределах одного ТИКа были вбросы, то сравнения с минимумом бесполезны). <b>Серые</b> столбцы соответствуют участкам с менее чем 100 голосами, так как в этом случае данных мало для уверенной оценки.</p>
       <p><b>Примечание</b>. При оценке минимального результата в пределах каждого ТИКа игнорируются участки с менее чем 100 голосами, а также результаты ниже 50%. При оценке минимальной явки игнорируются участки с менее чем 100 избирателями, либо с явкой ниже 30%.</p>
       <p>При наведении курсора на конкретный столбик можно увидеть подробную информацию о соответствующем УИКе и ТИКе. По клику можно перейти на страницу результатов на сайте ЦИКа, чтобы убедиться в корректности данных.</p>
       <p>Также для каждого ТИКа сделана оценка аномальности по числу «аномальных» участков. Если в пределах ТИКа более двух третей аномальных участков, его блок имеет красную рамку. Если аномальных участков от одной до двух третей, рамка оранжевая. Если проблемных УИКов менее трети, рамка серая. Каждый «сомнительный» УИК (оранжевые столбики) учитывается как половина аномального.</p>
@@ -518,41 +518,56 @@ function render() {
         }
       }
       for (let [uikName, uikId, total, voted, yays] of uiks) {
+        //total = 200 + Math.round(Math.random() * 300);
+        //  voted = Math.round((0.5 + Math.random() * 0.5) * total);
+        //  yays = Math.round((0.5 + Math.random() * 0.5) * voted);
         const turnout = 100 * voted / total;
         const result = 100 * yays / voted;
         let weight = 0;
-        switch (resultClass(result, voted)) {
-          case 'undef':
-            ctx.fillStyle = '#ccc';
-            break;
-          case 'danger': 
-          case 'danger-diff':
-            weight = 1;
-            break;
-          case 'warn':
-          case 'warn-diff':
-            weight = 0.5;
-            break;
-          case 'ok':
-            ctx.fillStyle = '#00bcd4';
-        }
-        switch (turnoutClass(turnout, total)) {
-          case 'danger': case 'danger-diff': weight = Math.max(weight, 1); break;
-          case 'warn': case 'warn-diff': weight = Math.max(weight, 0.5); break;
-        }
-        if (weight >= 1) {
+        let color = '#00bcd4';
+
+        const ar1 = 18;
+        const ar2 = 27;
+        const isAnomaly = ((result > 64.6+ar1 && turnout < 42) || (turnout > 42+ar2 && result < 64.6)) || (turnout > 42 && result > 64.6 && (result - 64.6) * (result - 64.6) / (ar1*ar1) + (turnout - 42) * (turnout - 42) / (ar2*ar2) > 1);
+        const sr1 = 13;
+        const sr2 = 18;
+        const isSuspicious = ((result > 64.6+sr1 && turnout < 42) || (turnout > 42+sr2 && result < 64.6)) || (turnout > 42 && result > 64.6 && (result - 64.6) * (result - 64.6) / (sr1*sr1) + (turnout - 42) * (turnout - 42) / (sr2*sr2) > 1);
+        if (total < 100) {
+          color = '#ccc';
+        } else
+        if (isAnomaly) {
           anomalyCnt += 1;
           regionAnomalies++;
-          ctx.fillStyle = '#f44336';
+          color = '#f44336';
         } else
-        if (weight >= 0.5) {
+        if (isSuspicious) {
           anomalyCnt += 0.5;
           regionWarns++;
-          ctx.fillStyle = '#ff9800';
+          color = '#ff9800';
         }
+        ctx.fillStyle = color;
         ctx.fillRect(i * (barW + barSp), barH * (1 - result / 100), barW, barH);
-        plot.addPoint(result, turnout, '#f44336', 0.27, 1.2);
+        const diff1 = (total - voted);
+        const diff2 = (voted - yays);
+        //if (regionName == 'Республика Татарстан (Татарстан)') {
+        //if (total > 100) {
+          
+          const isHighlighted = (diff1 == diff2 || diff1 == diff2 * 2 || diff1 * 2 == diff2 ||
+            [70, 75, 80, 85, 90, 95, 100].includes(Math.round(turnout * 10) * 0.1) ||
+            [70, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100].includes(Math.round(result * 10) * 0.1));
+          //  this.ctx.fillStyle = isAnomaly ? '#f44336' : (isSuspicious ? '#ff9800' : '#00bcd4');
+          // this.ctx.fillStyle = '#f44336';
+          plot.addPoint(result, turnout, '#f44336', 0.27, 1.2);
+        //}
         i++;
+        /*if (diff1 == diff2 || diff1 == diff2 * 2 || diff1 * 2 == diff2) {
+          console.log(regionName, tikName, total, voted, yays, nays, diff1, diff2);
+        }*/
+        //anom[regionName].uiks++;
+        //anom[regionName].yays+=yays;
+        //console.log(regionName, tikName, uikName, diff1, diff2);
+        
+        //}
       }
       if (anomalyCnt > 0.66 * uiks.length) {
         tikEl.classList.add('danger');

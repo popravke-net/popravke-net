@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поправке — НЕТ: аномальные УИКи</title>
+  <meta name="description" content="Визуализация результатов и аномалий на всех УИКах.">
+  <meta name="keywords" content="Поправки, Конституция, голосование, плебисцит, изменения, закон, РФ, Россия, Российская Федерация, Путин, обнуление, власть, политика">
+  <meta property="og:title" content="Поправке — НЕТ: аномальные УИКи" />
+  <meta property="og:description" content="Визуализация результатов и аномалий на всех УИКах." />
+  <meta property="og:image" content="https://popravke.net/anomalies.png" />
+  <meta property="og:url" content="https://popravke.net/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://popravke.net/anomalies.png" />
+  <link href="https://bots.mn/fonts.css" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Roboto Condensed', Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px 20px 40px 20px;
+  }
+  #content {
+    font-size: 30px;
+    font-size: calc(min(5vw, 30px));
+    width: 90%;
+    max-width: 1080px;
+  }
+
+  h1 {
+    text-align: center;
+  }
+  h1, b, strong {
+    color: #303030;
+  }
+  h1 span {
+    background-color: firebrick;
+    color: #fff;
+    padding: 0 10px;
+    margin: 0 -6px;
+  }
+  .legend {
+    max-width: 1500px;
+    margin: auto;
+    font-size: 14px;
+  }
+  #chart {
+    /*display: flex;
+    flex-wrap: wrap;*/
+    column-count: 2;
+    column-gap: 10px;
+    max-width: 1500px;
+    margin: 30px auto;
+  }
+  .region {
+    position: relative;
+    padding-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 8px;
+  }
+  .title {
+    position: absolute;
+    top: 2px;
+    left: 0px;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  .tik {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-right: 1px;
+    margin-bottom: 1px;
+    height: 8px;
+    padding: 1px;
+    display: flex;
+    position: relative;
+  }
+  .tik.active {
+    border-width: 2px;
+    margin: -1px -1px 0px 0px;
+  }
+  .tik canvas {
+    margin-top: -1px;
+  }
+  .tik.danger {
+    border-color: #f44336;
+  }
+  .tik.warn {
+    border-color: #ff9800;
+  }
+  b.danger, b.diff.danger-diff {
+    color: #f44336;
+  }
+  b.warn, b.diff.warn-diff {
+    color: #ff9800;
+  }
+  b.normal {
+    color: #00bcd4;
+  }
+  .tooltip {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.55);
+    margin-top: 12px;
+    font-weight: normal;
+    padding: 4px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .pointer, .pointer:after {
+    position: absolute;
+    width: 3px;
+    height: 1px;
+    z-index: 1000;
+    background: #000;
+  }
+  .pointer {
+    display: none;
+    pointer-events: none;
+    bottom: 100%;
+    transform: translate(-1px, 0px) rotate(-135deg);
+    overflow: visible;
+  }
+  .pointer:after {
+    content: '';
+    transform: translate(-1px, 1px) rotate(90deg);
+  }
+</style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-171297809-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-171297809-1');
+</script>
+</head>
+<body>
+  <div id="content">
+    <a href="https://popravke.net/"><h1>Поправке&nbsp;— <span>НЕТ</span></h1></a>
+  </div>
+  <div class="legend">
+    <p>Ниже визуализированы результаты голосования по поправкам к Конституции РФ, доступные на сайте Центризбиркома.</p>
+    <p>Каждый отдельный столбик соответствует одному УИКу. Его высота пропорциональна доле голосов «за» поправки на конкретном участке. Цветами окрашены «аномальные» участки. В данном случае оценка аномальности основана в первую очередь на значительных <b>локальных отклонениях</b> (в пределах одного ТИКа, то есть среди участков, которые территориально близки и должны показывать схожие результаты). См. также <a href="distribution.html">глобальные отклонения от нормального распределения</a>.</p>
+    <p><b class="danger">Красным</b> окрашены участки с откровенными аномалиями, а именно:
+      <ul>
+        <li>с результатом ниже 5% или выше 95%,</li>
+        <li>либо с результатом, на 25% превышающим минимальный среди УИКов этого же ТИКа,</li>
+        <li>либо с явкой выше 95%,</li>
+        <li>либо с явкой, на 50% превышающей минимальную среди УИКов этого же ТИКа.</li>
+      </ul></p>
+    <p><b class="warn">Оранжевым</b> окрашены участки, вызывающие серьёзные сомнения, а именно:
+      <ul>
+        <li>с результатом ниже 10% или выше 90%,</li>
+        <li>либо с результатом, на 20% превышающим минимальный среди УИКов этого же ТИКа,</li>
+        <li>либо с явкой выше 90%,</li>
+        <li>либо с явкой, на 40% превышающей минимальную среди УИКов этого же ТИКа.</li>
+      </ul></p>
+    <p><b class="normal">Синим</b> окрашены столбцы, соответствующие участкам без явных аномалий (это, разумеется, <b>не означает отсутствие фальсификаций</b> — например, если на <i>каждом</i> УИКе в пределах одного ТИКа были вбросы, то сравнения с минимумом бесполезны). <b>Серые</b> столбцы соответствуют участкам с менее чем 100 голосами, так как в этом случае данных мало для уверенной оценки.</p>
+    <p><b>Примечание</b>. При оценке минимального результата в пределах каждого ТИКа игнорируются участки с менее чем 100 голосами, а также результаты ниже 50%. При оценке минимальной явки игнорируются участки с менее чем 100 избирателями, либо с явкой ниже 30%.</p>
+    <p>При наведении курсора на конкретный столбик можно увидеть подробную информацию о соответствующем УИКе и ТИКе. По клику можно перейти на страницу результатов на сайте ЦИКа, чтобы убедиться в корректности данных.</p>
+    <p>Также для каждого ТИКа сделана оценка аномальности по числу «аномальных» участков. Если в пределах ТИКа более двух третей аномальных участков, его блок имеет красную рамку. Если аномальных участков от одной до двух третей, рамка оранжевая. Если проблемных УИКов менее трети, рамка серая. Каждый «сомнительный» УИК (оранжевые столбики) учитывается как половина аномального.</p>
+  </div>
+  <div id="chart"></div>
+<script src="tree.js"></script>
+<script>
+  const chart = document.getElementById('chart');
+
+  const dp = window.devicePixelRatio;
+  const barW = 2 * dp;
+  const barH = 10 * dp;
+  const barSp = 0.5 * dp;
+  let tooltipEl;
+  let pointerEl;
+  for (let [regionName, regionId, tiks] of root) {
+    const regionEl = document.createElement('div');
+    regionEl.className = 'region';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'title';
+    regionEl.appendChild(titleEl);
+    chart.appendChild(regionEl);
+    if (regionId === '100100164050020' || regionId === '100100164050019') {
+      tiks = [[regionName, regionId, tiks]];
+    }
+    let regionAnomalies = 0;
+    let regionWarns = 0;
+    let regionUiks = 0;
+    for (let [tikName, tikId, uiks] of tiks) {
+      const tikEl = document.createElement('a');
+      tikEl.href = `http://www.vybory.izbirkom.ru/region/region/izbirkom?action=show&vrn=100100163596966&vibid=${tikId}&type=465`;
+      tikEl.target = '_blank';
+      tikEl.className = 'tik';
+      regionEl.appendChild(tikEl);
+      const canvasEl = document.createElement('canvas');
+      const w = barW * uiks.length + barSp * (uiks.length - 1);
+      const h = barH;
+      canvasEl.width = w;
+      canvasEl.height = h;
+      canvasEl.style.width = (w / dp) + 'px';
+      canvasEl.style.height = (h / dp) + 'px';
+      const ctx = canvasEl.getContext('2d');
+      let minResult = 100;
+      let maxResult = 0;
+      let minTurnout = 100;
+      let maxTurnout = 0;
+      let tikTotal = 0;
+      let tikVoted = 0;
+      let tikYays = 0;
+      for (let [uikName, uikId, total, voted, yays] of uiks) {
+        const turnout = 100 * voted / total;
+        const result = 100 * yays / voted;
+        if (voted >= 100) {
+          minResult = Math.min(minResult, result);
+          maxResult = Math.max(maxResult, result);
+        }
+        if (total >= 100) {
+          minTurnout = Math.min(minTurnout, turnout);
+          maxTurnout = Math.max(maxTurnout, turnout);
+        }
+        tikTotal += total;
+        tikVoted += voted;
+        tikYays += yays;
+        regionUiks++;
+      }
+      const tikTurnout = 100 * tikVoted / tikTotal;
+      const tikResult = 100 * tikYays / tikVoted; 
+      let i = 0;
+      let anomalyCnt = 0;
+      const resultClass = (result, voted) => {
+        if (voted < 100) { // Neutral
+          return 'undef'; 
+        } else
+        if ((result < 5) || (result > 95)) {
+          return 'danger';
+        } else
+        if (regionId !== '100100164050020' && result > Math.max(minResult, 50) + 25) {
+          return 'danger-diff';
+        } else
+        if ((result < 10) || (result > 90)) {
+          return 'warn';
+        } else
+        if (regionId !== '100100164050020' && result > Math.max(minResult, 50) + 20) {
+          return 'warn-diff';
+        } else {
+          return 'ok';
+        }
+      }
+      const turnoutClass = (turnout, total) => {
+        if (total < 100) {
+          return 'undef';
+        } else
+        if (turnout > 95) {
+          return 'danger';
+        } else
+        if (regionId !== '100100164050020' && turnout > Math.max(minTurnout, 30) + 50) {
+          return 'danger-diff';
+        } else
+        if (turnout > 90) {
+          return 'warn';
+        } else
+        if (regionId !== '100100164050020' && turnout > Math.max(minTurnout, 30) + 40) {
+          return 'warn-diff';
+        } else {
+          return 'ok';
+        }
+      }
+      for (let [uikName, uikId, total, voted, yays] of uiks) {
+        const turnout = 100 * voted / total;
+        const result = 100 * yays / voted;
+        let weight = 0;
+        switch (resultClass(result, voted)) {
+          case 'undef':
+            ctx.fillStyle = '#ccc';
+            break;
+          case 'danger': 
+          case 'danger-diff':
+            weight = 1;
+            break;
+          case 'warn':
+          case 'warn-diff':
+            weight = 0.5;
+            break;
+          case 'ok':
+            ctx.fillStyle = '#00bcd4';
+        }
+        switch (turnoutClass(turnout, total)) {
+          case 'danger': case 'danger-diff': weight = Math.max(weight, 1); break;
+          case 'warn': case 'warn-diff': weight = Math.max(weight, 0.5); break;
+        }
+        if (weight >= 1) {
+          anomalyCnt += 1;
+          regionAnomalies++;
+          ctx.fillStyle = '#f44336';
+        } else
+        if (weight >= 0.5) {
+          anomalyCnt += 0.5;
+          regionWarns++;
+          ctx.fillStyle = '#ff9800';
+        }
+        ctx.fillRect(i * (barW + barSp), barH * (1 - result / 100), barW, barH);
+        i++;
+      }
+      if (anomalyCnt > 0.66 * uiks.length) {
+        tikEl.classList.add('danger');
+      } else
+      if (anomalyCnt > 0.33 * uiks.length) {
+        tikEl.classList.add('warn');
+      }
+      tikEl.appendChild(canvasEl);
+
+      const hoverFn = (ev) => {
+        tikEl.classList.add('active');
+        tooltipEl.style.display = 'block';
+        pointerEl.style.display = 'block';
+        const rect = tikEl.getBoundingClientRect();
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        let i = Math.floor((ev.offsetX * dp) / (barW + barSp));
+        i = Math.min(Math.max(0, i), uiks.length - 1);
+        const [uikName, uikId, total, voted, yays] = uiks[i];
+        const turnout = 100 * voted / total;
+        const result = 100 * yays / voted;
+        const diffTurnout = Math.round((turnout - minTurnout) * 10) / 10;
+        const diffResult = Math.round((result - minResult) * 10) / 10;
+        pointerEl.style.top = rect.top + scrollTop + 'px';
+        pointerEl.style.left = rect.left + scrollLeft + 2 + (i * (barW + barSp) / dp + barW * 0.5 / dp) + 'px';
+        tooltipEl.style.top = rect.top + scrollTop + barH / dp + 'px';
+        tooltipEl.style.left = rect.left + scrollLeft + 'px';
+        tooltipEl.innerHTML = [
+          `<b>${regionName}</b>`,
+          '',
+          `ТИК: <b>${tikName}</b>`,
+          `Явка по ТИКу: <b>${tikTurnout.toFixed(1)}%</b>, разброс <b class="${turnoutClass(minTurnout, 100)}">${minTurnout.toFixed(1)}%</b>—<b class="${turnoutClass(maxTurnout, 100)}">${maxTurnout.toFixed(1)}%</b>`,
+          `Результат по ТИКу: <b>${tikResult.toFixed(1)}%</b>, разброс <b class="${resultClass(minResult, 100)}">${minResult.toFixed(1)}%</b>—<b class="${resultClass(maxResult, 100)}">${maxResult.toFixed(1)}%</b>`,
+          '',
+          `<b>${uikName}</b>`,
+          `Явка по УИКу: <b class="${turnoutClass(turnout, total)}">${turnout.toFixed(1)}%</b> (<b class="diff ${turnoutClass(turnout, total)}">${diffTurnout > 0 ? '+' + diffTurnout + '%</b> к' : (diffTurnout ? '-' + -diffTurnout + '%</b> к' : '=</b>') } мин.), ${voted} чел.`,
+          `Результат по УИКу: <b class="${resultClass(result, voted)}">${result.toFixed(1)}%</b> (<b class="diff ${resultClass(result, voted)}">${diffResult > 0 ? '+' + diffResult + '%</b> к' : (diffResult ? '-' + -diffResult + '%</b> к' : '=</b>') } мин.), ${yays} «за»`,
+        ].join('<br/>');
+      }
+      const hoverOutFn = (ev) => {
+        tikEl.classList.remove('active');
+        tooltipEl.style.display = 'none';
+        pointerEl.style.display = 'none';
+      } 
+      canvasEl.addEventListener('mousemove', hoverFn);
+      canvasEl.addEventListener('mouseout', hoverOutFn);
+    }
+
+
+    titleEl.innerHTML = '<b>' + regionName + '</b>: ' +
+      '<b class="danger">' + regionAnomalies + '</b> аномальных УИКов (<b>' + (100 * regionAnomalies / regionUiks).toFixed(1) + '%</b>), ' +
+      '<b class="warn">' + regionWarns + '</b> сомнительных (<b>' + (100 * regionWarns / regionUiks).toFixed(1) + '%</b>)';
+  }
+  tooltipEl = document.createElement('div');
+  tooltipEl.className = 'tooltip';
+  pointerEl = document.createElement('div');
+  pointerEl.className = 'pointer';
+  document.body.appendChild(tooltipEl);
+  document.body.appendChild(pointerEl);
+</script>
+</body>
+</html>
